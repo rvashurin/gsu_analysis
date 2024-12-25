@@ -55,8 +55,8 @@ heatmap_methods = [
 ]
 
 metrics = {
-    'trivia': ['AlignScoreTargetOutput', 'AlignScoreOutputTarget', 'SampleAlignScoreTargetOutput', 'SampleAlignScoreOutputTarget'],
-    'coqa': ['AlignScoreTargetOutput', 'AlignScoreOutputTarget', 'SampleAlignScoreTargetOutput', 'SampleAlignScoreOutputTarget'],
+    'trivia': ['AlignScoreOutputTarget', 'SampleAlignScoreOutputTarget'],
+    'coqa': ['AlignScoreOutputTarget', 'SampleAlignScoreOutputTarget'],
     'mmlu': ['Accuracy', 'SampleAccuracy'],
     'gsm8k_cot': ['Accuracy', 'SampleAccuracy'],
     'xsum': ['Rouge_rougeL', 'SampleRouge_rougeL'],
@@ -76,7 +76,7 @@ def plot_similarity_heatmap_with_legend(texts, similarity_matrix, figname, title
         raise ValueError("Number of texts must match the size of the similarity matrix.")
 
     # Create a heatmap using matplotlib
-    fig, ax = plt.subplots(figsize=(18, 16))  # Adjust figure size for better display
+    fig, ax = plt.subplots(figsize=(10, 9))  # Adjust figure size for better display
 
     #corr_matrix = pd.DataFrame(similarity_matrix, index=texts, columns=texts)
     corr_matrix = similarity_matrix
@@ -171,7 +171,7 @@ for model in tqdm(models):
         data_size = len(man.stats['greedy_texts'])
 
         method_combinations = list(combinations(heatmap_methods, 2))
-        for method, method2 in method_combinations:
+        for method, method2 in tqdm(method_combinations):
             pair_out_dir = out_dir / f"{method}_{method2}"
 
             if method == method2:
