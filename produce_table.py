@@ -15,10 +15,23 @@ models = ['mistral7b', 'llama8b']
 
 def get_metrics(args):
     if args.do_sample:
-        ats_metrics = ['SampleRouge_rougeL']
-        nmt_metrics = ['SampleComet']
-        short_qa_metrics = ['SampleAccuracy']
-        long_qa_metrics = ['SampleAlignScoreOutputTarget']
+        if args.sample_strategy == 'first':
+            ats_metrics = ['SampleRouge_rougeL']
+            nmt_metrics = ['SampleComet']
+            short_qa_metrics = ['SampleAccuracy']
+            long_qa_metrics = ['SampleAlignScoreOutputTarget']
+        elif args.sample_strategy == 'best':
+            ats_metrics = ['BestSampleRouge_rougeL']
+            nmt_metrics = ['BestSampleComet']
+            short_qa_metrics = ['BestSampleAccuracy']
+            long_qa_metrics = ['BestSampleAlignScoreOutputTarget']
+        elif args.sample_strategy == 'best_normalized':
+            ats_metrics = ['BestNormalizedSampleRouge_rougeL']
+            nmt_metrics = ['BestNormalizedSampleComet']
+            short_qa_metrics = ['BestNormalizedSampleAccuracy']
+            long_qa_metrics = ['BestNormalizedSampleAlignScoreOutputTarget']
+        else:
+            raise ValueError(f'Invalid sample strategy: {args.sample_strategy}')
     else:
         ats_metrics = ['Rouge_rougeL']
         nmt_metrics = ['Comet']
@@ -34,6 +47,28 @@ def get_methods(args):
         'Perplexity',
         'MeanTokenEntropy',
     ]
+    focused_sample_methods = [
+        'SemanticAveMaxprob',
+        'SemanticAveMaxprobexp',
+        'SemanticMedianMaxprob',
+        'SemanticMedianMaxprobexp',
+        'SemanticAveMaxprobAveSimilarityexp',
+        'SemanticAveMaxprobAveSimilarity',
+        'SemanticEnrichedMaxprobAveDissimilarityexp',
+        'SemanticEnrichedMaxprobAveDissimilarity',
+        'SemanticAvePPL',
+        'SemanticAvePPLexp',
+        'SemanticMedianPPL',
+        'SemanticMedianPPLexp',
+        'SemanticAvePPLAveSimilarityexp',
+        'SemanticAvePPLAveSimilarity',
+        'SemanticEnrichedPPLAveDissimilarityexp',
+        'SemanticEnrichedPPLAveDissimilarity',
+        'SemanticAveMTE',
+        'SemanticMedianMTE',
+        'SemanticAveMTEAveSimilarity',
+        'SemanticEnrichedMTEAveDissimilarity',
+    ]
 
     methods = { 
         'general_baselines': [
@@ -41,40 +76,58 @@ def get_methods(args):
             'MonteCarloNormalizedSequenceEntropy',
             'SemanticEntropy',
             'CEDegMat',
+            'AveDissimilarity',
         ],
         'msp': [
             'MaximumSequenceProbability',
             'AveMaxprob',
             'SentenceSAR',
-            'MaxprobGSU',
-            'MaxprobGSUexp',
+            #'MaxprobGSU',
+            #'MaxprobGSUexp',
             'SemanticAveMaxprob',
             'SemanticAveMaxprobexp',
+            'SemanticMedianMaxprob',
+            'SemanticMedianMaxprobexp',
+            'SemanticAveMaxprobAveSimilarityexp',
+            'SemanticAveMaxprobAveSimilarity',
+            'SemanticEnrichedMaxprobAveDissimilarityexp',
+            'SemanticEnrichedMaxprobAveDissimilarity',
         ],
-        'tsar': [
-            'TokenSAR',
-            'AveTokenSAR',
-            'SAR_t0.001',
-            'TokenSARGSU',
-            'TokenSARGSUexp',
-            'SemanticAveTokenSAR',
-            'SemanticAveTokenSARexp',
-        ],
+        #'tsar': [
+        #    'TokenSAR',
+        #    'AveTokenSAR',
+        #    'SAR_t0.001',
+        #    #'TokenSARGSU',
+        #    #'TokenSARGSUexp',
+        #    'SemanticAveTokenSAR',
+        #    'SemanticAveTokenSARexp',
+        #    'SemanticMedianTokenSAR',
+        #    'SemanticMedianTokenSARexp',
+        #],
         'ppl': [
             'Perplexity',
             'AvePPL',
             'PPLSAR',
-            'PPLGSU',
-            'PPLGSUexp',
+            #'PPLGSU',
+            #'PPLGSUexp',
             'SemanticAvePPL',
             'SemanticAvePPLexp',
+            'SemanticMedianPPL',
+            'SemanticMedianPPLexp',
+            'SemanticAvePPLAveSimilarityexp',
+            'SemanticAvePPLAveSimilarity',
+            'SemanticEnrichedPPLAveDissimilarityexp',
+            'SemanticEnrichedPPLAveDissimilarity',
         ],
         'mte': [
             'MeanTokenEntropy',
             'AveMTE',
             #'MTESAR',
-            'MTEGSU',
+            #'MTEGSU',
             'SemanticAveMTE',
+            'SemanticMedianMTE',
+            'SemanticAveMTEAveSimilarity',
+            'SemanticEnrichedMTEAveDissimilarity',
         ]
     }
 
@@ -87,15 +140,26 @@ def get_methods(args):
             methods[key] = changed_methods
 
     if args.do_sample:
-        change_methods = single_sequence_methods
-
         for key, value in methods.items():
             changed_methods = []
             for method in value:
-                if method in change_methods:
-                    changed_methods.append(f'Sampled{method}')
+                if method in single_sequence_methods:
+                    changed_method = f'Sampled{method}'
                 else:
-                    changed_methods.append(method)
+                    changed_method = method
+
+                if method in single_sequence_methods + focused_sample_methods:
+                    if args.sample_strategy == 'first':
+                        changed_method = changed_method
+                    elif args.sample_strategy == 'best':
+                        changed_method = f'Best{changed_method}'
+                    elif args.sample_strategy == 'best_normalized':
+                        changed_method = f'BestNormalized{changed_method}'
+                    else:
+                        raise ValueError(f'Invalid sample strategy: {args.sample_strategy}')
+
+                changed_methods.append(changed_method)
+
             methods[key] = changed_methods
 
     return methods
@@ -105,6 +169,7 @@ def parse_args():
     # boolean argument do_sample with default value of False
     parser.add_argument('--do_sample', action='store_true', default=False)
     parser.add_argument('--exclude_ss', action='store_true')
+    parser.add_argument('--sample_strategy', default='first')
     return parser.parse_args()
 
 
@@ -177,7 +242,15 @@ def postprocess_latex(latex, metric_row):
         'SampledMaximumSequenceProbability &',
         'SampledTokenSAR &',
         'SampledPerplexity &',
-        'SampledMeanTokenEntropy &'
+        'SampledMeanTokenEntropy &',
+        'BestSampledMaximumSequenceProbability &',
+        'BestSampledTokenSAR &',
+        'BestSampledPerplexity &',
+        'BestSampledMeanTokenEntropy &',
+        'BestNormalizedSampledMaximumSequenceProbability &',
+        'BestNormalizedSampledTokenSAR &',
+        'BestNormalizedSampledPerplexity &',
+        'BestNormalizedSampledMeanTokenEntropy &',
     ]
 
     new_latex = []
@@ -209,15 +282,45 @@ def strip_latex(latex):
 
     return header, metric_row, group_rows, footer
 
+def get_caption(model, task, args):
+    if args.do_sample:
+        if args.sample_strategy == 'first':
+            prefix = 'First Sample'
+        elif args.sample_strategy == 'best':
+            prefix = 'Best Sample'
+        elif args.sample_strategy == 'best_normalized':
+            prefix = 'Best Normalized Sample'
+        else:
+            raise ValueError(f'Invalid sample strategy: {args.sample_strategy}')
+    else:
+        prefix = 'Greedy'
+
+    if task == 'nmt':
+        return f'{prefix} PRRs for {model} on translation tasks'
+    elif task == 'ats':
+        return f'{prefix} PRRs for {model} on summarization tasks'
+    elif task == 'qa':
+        return f'{prefix} PRRs for {model} on QA tasks'
+    else:
+        raise ValueError(f'Invalid task: {task}')
+
 def main():
     args = parse_args()
 
     for model in models:
-        #if args.do_sample:
-        base_dir = 'sample_metric_mans/log_exp'
-        #else:
-        #    base_dir = 'greedy_metric_mans/log_exp'
-        tex_prefix = 'sample' if args.do_sample else 'greedy'
+        base_dir = 'sample_metric_mans/best_sample_enriched'
+
+        if args.do_sample:
+            if args.sample_strategy == 'first':
+                tex_prefix = 'sample'
+            elif args.sample_strategy == 'best':
+                tex_prefix = 'best_sample'
+            elif args.sample_strategy == 'best_normalized':
+                tex_prefix = 'best_normalized_sample'
+            else:
+                raise ValueError(f'Invalid sample strategy: {args.sample_strategy}')
+        else:
+            tex_prefix = 'greedy'
 
         methods_dict = get_methods(args)
         ats_metrics, nmt_metrics, short_qa_metrics, long_qa_metrics = get_metrics(args)
@@ -253,7 +356,8 @@ def main():
                 group_rows[method] = method_row
 
             df = pd.DataFrame.from_dict(group_rows, orient='index', columns=('WMT14FrEn', 'WMT19DeEn'))
-            latex = df.style.format(precision=3).background_gradient(cmap=cm).set_caption(f'{model} PRRs').to_latex()
+            caption = get_caption(model, 'nmt', args)
+            latex = df.style.format(precision=3).background_gradient(cmap=cm).set_caption(caption).to_latex()
             latex = postprocess_latex(latex, metric_row)
             header, latex_metric_row, latex_group_rows, footer = strip_latex(latex)
             all_rows = all_rows + latex_group_rows
@@ -280,7 +384,7 @@ def main():
                 group_rows[method] = method_row
 
             df = pd.DataFrame.from_dict(group_rows, orient='index', columns=('XSum/RougeL',))
-            latex = df.style.format(precision=3).background_gradient(cmap=cm).set_caption(f'{model} PRRs').to_latex()
+            latex = df.style.format(precision=3).background_gradient(cmap=cm).set_caption(caption).to_latex()
             latex = postprocess_latex(latex, metric_row)
             header, latex_metric_row, latex_group_rows, footer = strip_latex(latex)
             all_rows = all_rows + latex_group_rows
@@ -320,7 +424,7 @@ def main():
                 group_rows[method] = method_row
 
             df = pd.DataFrame.from_dict(group_rows, orient='index', columns=('CoQa/Al', 'Trivia/Al', 'MMLU/Acc', 'GSM8k/Acc',))
-            latex = df.style.format(precision=3).background_gradient(cmap=cm).set_caption(f'{model} PRRs').to_latex()
+            latex = df.style.format(precision=3).background_gradient(cmap=cm).set_caption(caption).to_latex()
             latex = postprocess_latex(latex, metric_row)
             header, latex_metric_row, latex_group_rows, footer = strip_latex(latex)
             all_rows = all_rows + latex_group_rows
