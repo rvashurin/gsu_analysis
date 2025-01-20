@@ -11,7 +11,7 @@ import argparse
 
 cm = sns.color_palette("coolwarm", as_cmap=True)
 
-models = ['mistral7b', 'llama8b']
+models = ['mistral7b', 'llama8b', 'falcon7b']
 metrics = ['AlignScoreOutputTarget',
            'AlignScoreOutputTarget',
            'Accuracy',
@@ -60,7 +60,7 @@ def postprocess_latex(latex):
     return latex
 
 for model in models:
-    base_dir = 'sample_metric_mans/best_sample_enriched'
+    base_dir = 'sample_metric_mans/best_sample_with_greedy_enriched'
 
     rows = {}
     for metric_name, dataset in zip(metrics, datasets):

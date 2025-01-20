@@ -11,7 +11,7 @@ import argparse
 
 cm = sns.color_palette("coolwarm", as_cmap=True)
 
-models = ['mistral7b', 'llama8b']
+models = ['mistral7b', 'llama8b', 'falcon7b']
 
 def get_metrics(args):
     if args.do_sample:
@@ -76,22 +76,24 @@ def get_methods(args):
             'MonteCarloNormalizedSequenceEntropy',
             'SemanticEntropy',
             'CEDegMat',
-            'AveDissimilarity',
+            #'AveDissimilarity',
+            'SAR_t0.001',
         ],
         'msp': [
             'MaximumSequenceProbability',
-            'AveMaxprob',
-            'SentenceSAR',
+            #'AveMaxprob',
+            #'SentenceSAR',
             #'MaxprobGSU',
             #'MaxprobGSUexp',
-            'SemanticAveMaxprob',
-            'SemanticAveMaxprobexp',
-            'SemanticMedianMaxprob',
-            'SemanticMedianMaxprobexp',
-            'SemanticAveMaxprobAveSimilarityexp',
-            'SemanticAveMaxprobAveSimilarity',
-            'SemanticEnrichedMaxprobAveDissimilarityexp',
+            #'SemanticAveMaxprob',
+            #'SemanticAveMaxprobexp',
+            #'SemanticMedianMaxprob',
+            #'SemanticMedianMaxprobexp',
+            #'SemanticAveMaxprobAveSimilarityexp',
+            #'SemanticAveMaxprobAveSimilarity',
+            #'SemanticEnrichedMaxprobAveDissimilarityexp',
             'SemanticEnrichedMaxprobAveDissimilarity',
+            #'SumSemanticMaxprob',
         ],
         #'tsar': [
         #    'TokenSAR',
@@ -106,27 +108,28 @@ def get_methods(args):
         #],
         'ppl': [
             'Perplexity',
-            'AvePPL',
-            'PPLSAR',
+            #'AvePPL',
+            #'PPLSAR',
             #'PPLGSU',
             #'PPLGSUexp',
-            'SemanticAvePPL',
-            'SemanticAvePPLexp',
-            'SemanticMedianPPL',
-            'SemanticMedianPPLexp',
-            'SemanticAvePPLAveSimilarityexp',
-            'SemanticAvePPLAveSimilarity',
-            'SemanticEnrichedPPLAveDissimilarityexp',
+            #'SemanticAvePPL',
+            #'SemanticAvePPLexp',
+            #'SemanticMedianPPL',
+            #'SemanticMedianPPLexp',
+            #'SemanticAvePPLAveSimilarityexp',
+            #'SemanticAvePPLAveSimilarity',
+            #'SemanticEnrichedPPLAveDissimilarityexp',
             'SemanticEnrichedPPLAveDissimilarity',
+            #'SumSemanticPPL',
         ],
         'mte': [
             'MeanTokenEntropy',
-            'AveMTE',
+            #'AveMTE',
             #'MTESAR',
             #'MTEGSU',
-            'SemanticAveMTE',
-            'SemanticMedianMTE',
-            'SemanticAveMTEAveSimilarity',
+            #'SemanticAveMTE',
+            #'SemanticMedianMTE',
+            #'SemanticAveMTEAveSimilarity',
             'SemanticEnrichedMTEAveDissimilarity',
         ]
     }
@@ -160,6 +163,16 @@ def get_methods(args):
 
                 changed_methods.append(changed_method)
 
+            methods[key] = changed_methods
+    else:
+        for key, value in methods.items():
+            changed_methods = []
+            for method in value:
+                if method in focused_sample_methods:
+                    changed_method = f'Greedy{method}'
+                else:
+                    changed_method = method
+                changed_methods.append(changed_method)
             methods[key] = changed_methods
 
     return methods
@@ -308,7 +321,7 @@ def main():
     args = parse_args()
 
     for model in models:
-        base_dir = 'sample_metric_mans/best_sample_enriched'
+        base_dir = 'sample_metric_mans/best_sample_with_greedy_enriched'
 
         if args.do_sample:
             if args.sample_strategy == 'first':

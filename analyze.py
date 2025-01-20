@@ -24,34 +24,36 @@ datasets = [
     "xsum", "wmt14_fren", "wmt19_deen", 
 ]
 
-script_dir = 'sample_metric_mans/log_exp'
+script_dir = 'sample_metric_mans/best_sample_with_greedy_enriched'
 
 heatmap_methods = [
-    'CEDegMat',
-    'MaximumSequenceProbability',
-    'Perplexity',
-    'MeanTokenEntropy',
-    'SampledMaximumSequenceProbability',
-    'SampledPerplexity',
-    'SampledMeanTokenEntropy',
-    'MonteCarloSequenceEntropy',
-    'MonteCarloNormalizedSequenceEntropy',
-    'SemanticEntropy',
-    'AveMaxprob',
-    'AvePPL',
-    'AveMTE',
-    'SemanticAveMaxprob',
-    'SemanticAvePPL',
-    'SemanticAveMTE',
-    'SemanticAveMaxprobexp',
-    'SemanticAvePPLexp',
-    'SentenceSAR',
-    'SAR_t0.001',
-    'MaxprobGSU',
-    'PPLGSU',
-    'MTEGSU',
-    'MaxprobGSUexp',
-    'PPLGSUexp',
+    #'CEDegMat',
+    #'MaximumSequenceProbability',
+    #'Perplexity',
+    #'MeanTokenEntropy',
+    #'SampledMaximumSequenceProbability',
+    #'SampledPerplexity',
+    #'SampledMeanTokenEntropy',
+    #'MonteCarloSequenceEntropy',
+    #'MonteCarloNormalizedSequenceEntropy',
+    #'SemanticEntropy',
+    #'AveMaxprob',
+    #'AvePPL',
+    #'AveMTE',
+    #'SemanticAveMaxprob',
+    #'SemanticAvePPL',
+    #'SemanticAveMTE',
+    #'SemanticAveMaxprobexp',
+    #'SemanticAvePPLexp',
+    #'SentenceSAR',
+    #'SAR_t0.001',
+    #'MaxprobGSU',
+    #'PPLGSU',
+    #'MTEGSU',
+    #'MaxprobGSUexp',
+    #'PPLGSUexp',
+    'GreedySemanticEnrichedPPLAveDissimilarityexp',
+    'GreedySemanticEnrichedPPLAveDissimilarity',
 ]
 
 metrics = {
@@ -231,7 +233,7 @@ for model in tqdm(models):
                     text += "\n" + f"=" * 100 + "\n\n"
 
                     text += f"target text: {man.stats['target_texts'][random_i]}\n\n"
-                    text += f"greeedy text: {repr(man.stats['greedy_texts'][random_i])}\n\n"
+                    text += f"greedy text: {repr(man.stats['greedy_texts'][random_i])}\n\n"
                     text += f"sample text: {repr(man.stats['sample_texts'][random_i][0])}\n\n"
 
                     text += f"=" * 100 + "\n\n"

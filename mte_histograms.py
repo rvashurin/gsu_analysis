@@ -69,57 +69,69 @@ def text_format(prop):
     return content.strip()
 
 #trivia_man = UEManager.load(f'mistral7b_trivia_sentsar_variants.man')
-gsm8k_man = UEManager.load(f'mistral7b_gsm8k_cot.man')
-xsum_man = UEManager.load(f'mistral7b_xsum.man')
+#gsm8k_man = UEManager.load(f'mistral7b_gsm8k_cot.man')
+#xsum_man = UEManager.load(f'mistral7b_xsum.man')
+#
+#wmt_14_fren_man = UEManager.load(f'mistral7b_wmt14_fren.man')
+#wmt_14_enfr_man = UEManager.load(f'mistral7b_wmt14_enfr.man')
+#wmt_19_deen_man = UEManager.load(f'mistral7b_wmt19_deen.man')
+#wmt_19_ende_man = UEManager.load(f'mistral7b_wmt19_ende.man')
+#
+#methods = ['MonteCarloSequenceEntropy',
+#    'MonteCarloNormalizedSequenceEntropy',
+#    'SemanticEntropy',
+#    'MaximumSequenceProbability',
+#    'SentenceSAR',
+#    'MaxprobGSU_no_log_reverse',
+#    'TokenSAR',
+#    'SAR_t0.001',
+#    'TokenSARGSU_no_log_reverse',
+#    'Perplexity',
+#    'PPLSAR',
+#    'PPLGSU_no_log_reverse',
+#    'MeanTokenEntropy',
+#    'MTESAR',
+#    'MTEGSU_no_log_reverse'
+#]
+#
+#rows = {}
+#
+#managers = {
+#    'wmt14_fren': wmt_14_fren_man,
+#    'wmt19_deen': wmt_19_deen_man,
+#    'gsm8k': gsm8k_man,
+#    'xsum': xsum_man
+#}
 
-wmt_14_fren_man = UEManager.load(f'mistral7b_wmt14_fren.man')
-wmt_14_enfr_man = UEManager.load(f'mistral7b_wmt14_enfr.man')
-wmt_19_deen_man = UEManager.load(f'mistral7b_wmt19_deen.man')
-wmt_19_ende_man = UEManager.load(f'mistral7b_wmt19_ende.man')
+#for dataset_name, manager in managers.items():
+manager = UEManager.load('sample_metric_mans/best_sample_with_greedy_enriched/mistral7b_wmt14_fren.man')
 
-methods = ['MonteCarloSequenceEntropy',
-    'MonteCarloNormalizedSequenceEntropy',
-    'SemanticEntropy',
-    'MaximumSequenceProbability',
-    'SentenceSAR',
-    'MaxprobGSU_no_log_reverse',
-    'TokenSAR',
-    'SAR_t0.001',
-    'TokenSARGSU_no_log_reverse',
-    'Perplexity',
-    'PPLSAR',
-    'PPLGSU_no_log_reverse',
-    'MeanTokenEntropy',
-    'MTESAR',
-    'MTEGSU_no_log_reverse'
-]
+ppl_log_vals = np.array(manager.estimations[('sequence', 'Perplexity')])
+ppl_exp_vals = -np.exp(-ppl_log_vals)
 
-rows = {}
+#log_vals = manager.estimations[('sequence', 'GreedySemanticEnrichedPPLAveDissimilarity')]
+#exp_vals = manager.estimations[('sequence', 'GreedySemanticEnrichedPPLAveDissimilarityexp')]
 
-managers = {
-    'wmt14_fren': wmt_14_fren_man,
-    'wmt19_deen': wmt_19_deen_man,
-    'gsm8k': gsm8k_man,
-    'xsum': xsum_man
-}
+#random_sims = np.random.uniform(0, 1, len(ppl_log_vals))
+#
+log_vals = ppl_log_vals * 0.05
+exp_vals = ppl_exp_vals * 0.05
 
-for dataset_name, manager in managers.items():
-    mte_vals = manager.estimations[('sequence', 'MeanTokenEntropy')]
-    mte_sar_vals = manager.estimations[('sequence', 'MTESAR')]
-    mte_gsu_vals = manager.estimations[('sequence', 'MTEGSU_no_log_reverse')]
+fig, axs = plt.subplots(2, 2, figsize=(10, 10))
 
-    fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+sns.histplot(ppl_log_vals, bins=100, ax=axs[0, 0], color='blue')
+axs[0, 0].set_title('ppl log')
 
-    # build histograms for MTE, MTE_SAR, MTE_GSU
-    sns.histplot(mte_vals, bins=100, ax=axs[0], color='blue')
-    axs[0].set_title('MTE')
+sns.histplot(ppl_exp_vals, bins=100, ax=axs[0, 1], color='red')
+axs[0, 1].set_title('ppl exp')
 
-    sns.histplot(mte_sar_vals, bins=100, ax=axs[1], color='red')
-    axs[1].set_title('MTE_SAR')
+# build histograms for MTE, MTE_SAR, MTE_GSU
+sns.histplot(log_vals, bins=100, ax=axs[1, 0], color='blue')
+axs[1, 0].set_title('mg_ppl_log')
 
-    sns.histplot(mte_gsu_vals, bins=100, ax=axs[2], color='green')
-    axs[2].set_title('MTE_GSU')
+sns.histplot(exp_vals, bins=100, ax=axs[1, 1], color='red')
+axs[1, 1].set_title('mg_ppl_exp')
 
-    plt.suptitle(f'{dataset_name} MTE Histograms')
+plt.suptitle(f'WMT14 FREN log/exp histograms')
 
-    plt.savefig(f'{dataset_name}_mte_histograms.png')
+plt.savefig(f'wmt14_fren_log_exp_hist.png')
