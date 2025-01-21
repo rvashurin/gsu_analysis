@@ -11,8 +11,9 @@ from tqdm import tqdm
 import torch 
 from lm_polygraph.utils.deberta import Deberta
 from lm_polygraph.generation_metrics.alignscore_utils import AlignScorer
+import numpy as np
 
-nli_model = Deberta(batch_size=1, device='cpu')
+nli_model = Deberta(batch_size=1, device='cuda')
 
 class DummyModel:
     def __init__(self):
@@ -22,7 +23,9 @@ class DummyModel:
         return 'cpu'
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-batch_size = 1
+
+batch_size = 20
+
 ckpt_path="https://huggingface.co/yzha/AlignScore/resolve/main/AlignScore-large.ckpt"
 align_scorer = AlignScorer(
     model="roberta-large",
@@ -40,13 +43,19 @@ def main():
         "xsum", "wmt14_fren", "wmt19_deen", 
         #"wmt14_enfr", "wmt19_ende"
     ]
-    #models = ["falcon7b"]
-    #datasets = ["trivia"]
 
-    script_dir = 'sample_metric_mans/best_sample_with_greedy'
+    script_dir = '/workspace/mans'
+    out_dir = '/workspace/processed_mans'
 
     stat_calculators = [
+        SemanticMatrixCalculator(nli_model),
+        AlignMatrixCalculator(align_scorer),
+        RougeLSemanticMatrixCalculator(),
+#
+        GreedySimilarityCalculator(nli_model),
+        GreedySemanticMatrixCalculator(nli_model),
         GreedyAlignMatrixCalculator(align_scorer),
+        GreedyRougeLSemanticMatrixCalculator(),
     ]
 
     # Loop through each model and dataset combination
@@ -63,8 +72,11 @@ def main():
             for calculator in stat_calculators:
                 texts = stats["greedy_texts"]
                 values = calculator(dependencies=stats, texts=texts, model=DummyModel())
-                breakpoint()
-                pass
+                stats.update(values)
+
+            man.stats = stats
+            man.save_path = os.path.join(out_dir, f"{model}_{dataset}.man")
+            man.save()
 
 if __name__ == '__main__':
     main()
