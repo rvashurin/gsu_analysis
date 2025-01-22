@@ -17,9 +17,10 @@ import pathlib
 class DummyModel:
     def __init__(self, device='cpu'):
         self.tokenizer = AutoTokenizer.from_pretrained('mistral-community/Mistral-7B-v0.2')
+        self.device = device
 
     def device(self):
-        return device
+        return self.device
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -54,7 +55,7 @@ def main():
         ckpt_path=ckpt_path,
         evaluation_mode="nli_sp",
     )
-    nli_model = Deberta(batch_size=1, device=f"cuda:{cuda_device}")
+    nli_model = Deberta(batch_size=batch_size, device=f"cuda:{cuda_device}")
 
     stat_calculators = [
         SemanticMatrixCalculator(nli_model),
