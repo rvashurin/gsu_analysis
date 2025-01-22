@@ -13,39 +13,47 @@ from lm_polygraph.utils.deberta import Deberta
 from lm_polygraph.generation_metrics.alignscore_utils import AlignScorer
 import numpy as np
 
-nli_model = Deberta(batch_size=1, device='cuda')
-
 class DummyModel:
-    def __init__(self):
+    def __init__(self, device='cpu'):
         self.tokenizer = AutoTokenizer.from_pretrained('mistral-community/Mistral-7B-v0.2')
 
     def device(self):
-        return 'cpu'
+        return device
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def parse_args():
+    parser = argparse.ArgumentParser()
+    # boolean argument do_sample with default value of False
+    parser.add_argument('--model', default='mistral7b')
+    # list argument
+    parser.add_argument('--datasets', nargs='+', default=["trivia", "mmlu", "coqa", "gsm8k_cot", "xsum", "wmt14_fren", "wmt19_deen"])
+    parser.add_argument('--cuda_device', type=int, default=0)
+    parser.add_argument('--batch_size', type=int, default=5)
+    # required arguments
+    parser.add_argument('--in_dir', type=str, required=True)
+    parser.add_argument('--out_dir', type=str, required=True
 
-batch_size = 20
-
-ckpt_path="https://huggingface.co/yzha/AlignScore/resolve/main/AlignScore-large.ckpt"
-align_scorer = AlignScorer(
-    model="roberta-large",
-    batch_size=batch_size,
-    device=device,
-    ckpt_path=ckpt_path,
-    evaluation_mode="nli_sp",
-)
+    return parser.parse_args()
 
 def main():
-    # Define models and datasets
-    models = ["falcon7b", "mistral7b", "llama8b"]
-    datasets = [
-        "trivia", "mmlu", "coqa", "gsm8k_cot", 
-        "xsum", "wmt14_fren", "wmt19_deen", 
-        #"wmt14_enfr", "wmt19_ende"
-    ]
+    args = parse_args()
+    model = args.model
+    datasets = args.datasets
+    in_dir = args.in_dir
+    out_dir = args.out_dir
+    batch_size = args.batch_size
+    cuda_device = args.cuda_device
 
-    script_dir = '/workspace/mans'
-    out_dir = '/workspace/processed_mans'
+    device = torch.device(f"cuda:{cuda_device}")
+
+    ckpt_path="https://huggingface.co/yzha/AlignScore/resolve/main/AlignScore-large.ckpt"
+    align_scorer = AlignScorer(
+        model="roberta-large",
+        batch_size=batch_size,
+        device=device,
+        ckpt_path=ckpt_path,
+        evaluation_mode="nli_sp",
+    )
+    nli_model = Deberta(batch_size=1, device=f"cuda:{cuda_device}")
 
     stat_calculators = [
         SemanticMatrixCalculator(nli_model),
@@ -58,25 +66,24 @@ def main():
         GreedyRougeLSemanticMatrixCalculator(),
     ]
 
-    # Loop through each model and dataset combination
-    for model in tqdm(models):
-        for dataset in tqdm(datasets):
-            # Construct manager file path
-            manager_filename = f"{model}_{dataset}.man"
-            manager_path = os.path.join(script_dir, manager_filename)
+    # Loop through datasets
+    for dataset in tqdm(datasets):
+        # Construct manager file path
+        manager_filename = f"{model}_{dataset}.man"
+        manager_path = os.path.join(in_dir, manager_filename)
 
-            man = UEManager.load(manager_path)
+        man = UEManager.load(manager_path)
 
-            stats = man.stats
+        stats = man.stats
 
-            for calculator in stat_calculators:
-                texts = stats["greedy_texts"]
-                values = calculator(dependencies=stats, texts=texts, model=DummyModel())
-                stats.update(values)
+        for calculator in stat_calculators:
+            texts = stats["greedy_texts"]
+            values = calculator(dependencies=stats, texts=texts, model=DummyModel(device=f"cuda:{cuda_device}",))
+            stats.update(values)
 
-            man.stats = stats
-            man.save_path = os.path.join(out_dir, f"{model}_{dataset}.man")
-            man.save()
+        man.stats = stats
+        man.save_path = os.path.join(out_dir, f"{model}_{dataset}.man")
+        man.save()
 
 if __name__ == '__main__':
     main()
