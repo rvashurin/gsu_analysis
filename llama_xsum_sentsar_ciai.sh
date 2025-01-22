@@ -28,8 +28,8 @@ source activate polygraph_maiya
 
 cd /home/maxim.panov/workspace_vashurin/gsu_analysis
 
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python HF_HOME=/l/users/maxim.panov/cache python recalc_greedy_sem_mat.py --model llama8b --datasets trivia mmlu coqa --in_dir /l/users/maxim.panov/storage_vashurin/mans --out_dir /l/users/maxim.panov/storage_vashurin/processed_mans --batch_size 5 --cuda_device 0 &
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python HF_HOME=/l/users/maxim.panov/cache python recalc_greedy_sem_mat.py --model llama8b --datasets gsm8k_cot xsum --in_dir /l/users/maxim.panov/storage_vashurin/mans --out_dir /l/users/maxim.panov/storage_vashurin/processed_mans --batch_size 5 --cuda_device 0 &
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python HF_HOME=/l/users/maxim.panov/cache python recalc_greedy_sem_mat.py --model llama8b --datasets wmt14_fren wmt19_deen --in_dir /l/users/maxim.panov/storage_vashurin/mans --out_dir /l/users/maxim.panov/storage_vashurin/processed_mans --batch_size 5 --cuda_device 0 &
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python HF_HOME=/l/users/maxim.panov/cache python recalc_greedy_sem_mat.py --model llama8b --datasets trivia mmlu coqa --in_dir /l/users/maxim.panov/storage_vashurin/polygraph_mans/gsu_runs --out_dir /l/users/maxim.panov/storage_vashurin/polygraph_mans/gsu_runs/enriched --batch_size 5 --cuda_device 0 &
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python HF_HOME=/l/users/maxim.panov/cache python recalc_greedy_sem_mat.py --model llama8b --datasets gsm8k_cot xsum --in_dir /l/users/maxim.panov/storage_vashurin/polygraph_mans/gsu_runs --out_dir /l/users/maxim.panov/storage_vashurin/polygraph_mans/gsu_runs/enriched --batch_size 5 --cuda_device 1 &
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python HF_HOME=/l/users/maxim.panov/cache python recalc_greedy_sem_mat.py --model llama8b --datasets wmt14_fren wmt19_deen --in_dir /l/users/maxim.panov/storage_vashurin/polygraph_mans/gsu_runs --out_dir /l/users/maxim.panov/storage_vashurin/polygraph_mans/gsu_runs/enriched --batch_size 5 --cuda_device 2 &
 
 wait
