@@ -12,6 +12,7 @@ import torch
 from lm_polygraph.utils.deberta import Deberta
 from lm_polygraph.generation_metrics.alignscore_utils import AlignScorer
 import numpy as np
+import pathlib
 
 class DummyModel:
     def __init__(self, device='cpu'):
@@ -30,7 +31,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=5)
     # required arguments
     parser.add_argument('--in_dir', type=str, required=True)
-    parser.add_argument('--out_dir', type=str, required=True
+    parser.add_argument('--out_dir', type=str, required=True)
 
     return parser.parse_args()
 
@@ -82,6 +83,7 @@ def main():
             stats.update(values)
 
         man.stats = stats
+        pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
         man.save_path = os.path.join(out_dir, f"{model}_{dataset}.man")
         man.save()
 
