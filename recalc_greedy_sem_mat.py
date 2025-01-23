@@ -17,10 +17,10 @@ import pathlib
 class DummyModel:
     def __init__(self, device='cpu'):
         self.tokenizer = AutoTokenizer.from_pretrained('mistral-community/Mistral-7B-v0.2')
-        self.device = device
+        self._device = device
 
     def device(self):
-        return self.device
+        return self._device
 
 def parse_args():
     parser = argparse.ArgumentParser()
