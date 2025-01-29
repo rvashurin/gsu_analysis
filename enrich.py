@@ -19,8 +19,8 @@ def main():
     #models = ["falcon7b"]
     #datasets = ["trivia"]
 
-    script_dir = 'sample_metric_mans/best_sample_with_greedy'
-    out_dir = 'sample_metric_mans/best_sample_with_greedy_enriched'
+    script_dir = 'sample_metric_mans/with_extra_sim_matrices'
+    out_dir = 'sample_metric_mans/with_extra_sim_matrices_enriched'
 
     estimators = [
         #SampledMaximumSequenceProbability(),
