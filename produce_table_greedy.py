@@ -60,10 +60,6 @@ def get_methods(args):
             'GreedySemanticEnrichedMaxprobAveDissimilarity',
 
         ],
-        # 'tsar': [
-        #     'BestSampledTokenSAR',
-        #     'BestSemanticEnrichedTokenSARAveDissimilarity',
-        # ],
         'ppl': [
             'Perplexity',
             'GreedySemanticEnrichedPPLAveDissimilarity',
@@ -254,7 +250,7 @@ def main():
     \\caption{Results for Evaluated Sequence - Greedy Sample: Mean PRR across datasets for each task. The best performing method is in bold, and the second-best is underscored. Arrows indicate improvement in CoCoA over the base version.}
     \\label{tab:best_sample_results}
     \\end{table*}"""
-    
+
 
     method_mapping ={
     'MonteCarloSequenceEntropy': 'MCSE',

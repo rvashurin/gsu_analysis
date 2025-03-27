@@ -19,24 +19,24 @@ datasets = ['trivia', 'mmlu', 'coqa', 'gsm8k_cot', 'xsum', 'wmt14_fren', 'wmt19_
 def get_metrics(args):
     if args.do_sample:
         if args.sample_strategy == 'first':
-            ats_metrics = ['SampleRouge_rougeL']
+            ats_metrics = ['SampleAlignScoreInputOutput']
             nmt_metrics = ['SampleComet']
             short_qa_metrics = ['SampleAccuracy']
             long_qa_metrics = ['SampleAlignScoreOutputTarget']
         elif args.sample_strategy == 'best':
-            ats_metrics = ['BestSampleRouge_rougeL']
+            ats_metrics = ['BestSampleAlignScoreInputOutput']
             nmt_metrics = ['BestSampleComet']
             short_qa_metrics = ['BestSampleAccuracy']
             long_qa_metrics = ['BestSampleAlignScoreOutputTarget']
         elif args.sample_strategy == 'best_normalized':
-            ats_metrics = ['BestNormalizedSampleRouge_rougeL']
+            ats_metrics = ['BestNormalizedSampleAlignScoreInputOutput']
             nmt_metrics = ['BestNormalizedSampleComet']
             short_qa_metrics = ['BestNormalizedSampleAccuracy']
             long_qa_metrics = ['BestNormalizedSampleAlignScoreOutputTarget']
         else:
             raise ValueError(f'Invalid sample strategy: {args.sample_strategy}')
     else:
-        ats_metrics = ['Rouge_rougeL']
+        ats_metrics = ['AlignScoreInputOutput']
         nmt_metrics = ['Comet']
         short_qa_metrics = ['Accuracy']
         long_qa_metrics = ['AlignScoreOutputTarget']
@@ -50,6 +50,25 @@ method_names = {
     'BestSemanticEnrichedMaxprobAveDissimilarity': '$\\text{CoCoA}_{MSP}$',
     'BestSemanticEnrichedPPLAveDissimilarity': '$\\text{CoCoA}_{PPL}$',
     'BestSemanticEnrichedMTEAveDissimilarity': '$\\text{CoCoA}_{MTE}$',
+#
+    'GreedySumSemanticMaxprob': '$\\text{AdditiveCoCoA}_{MSP}$',
+    'GreedySumSemanticPPL': '$\\text{AdditiveCoCoA}_{PPL}$',
+    'GreedySumSemanticMTE': '$\\text{AdditiveCoCoA}_{MTE}$',
+    'BestSumSemanticMaxprob': '$\\text{AdditiveCoCoA}_{MSP}$',
+    'BestSumSemanticPPL': '$\\text{AdditiveCoCoA}_{PPL}$',
+    'BestSumSemanticMTE': '$\\text{AdditiveCoCoA}_{MTE}$',
+#
+    'GreedySemanticEnrichedMaxprobTotalDissimilarity': '$\\text{FullSampleCoCoA}_{MSP}$',
+    'GreedySemanticEnrichedPPLTotalDissimilarity': '$\\text{FullSampleCoCoA}_{PPL}$',
+    'GreedySemanticEnrichedMTETotalDissimilarity': '$\\text{FullSampleCoCoA}_{MTE}$',
+    'BestSemanticEnrichedMaxprobTotalDissimilarity': '$\\text{FullSampleCoCoA}_{MSP}$',
+    'BestSemanticEnrichedPPLTotalDissimilarity': '$\\text{FullSampleCoCoA}_{PPL}$',
+    'BestSemanticEnrichedMTETotalDissimilarity': '$\\text{FullSampleCoCoA}_{MTE}$',
+#
+    'GreedyProbCocoaMaxprob': '$\\text{ProbCoCoA}_{MSP}$',
+    'GreedyProbCocoaPPL': '$\\text{ProbCoCoA}_{PPL}$',
+    'BestProbCocoaMaxprob': '$\\text{ProbCoCoA}_{MSP}$',
+    'BestProbCocoaPPL': '$\\text{ProbCoCoA}_{PPL}$',
 }
 
 model_names = {
@@ -66,29 +85,17 @@ def get_methods(args):
         'MeanTokenEntropy',
     ]
     focused_sample_methods = [
-        'SemanticAveMaxprob',
-        'SemanticAveMaxprobexp',
-        'SemanticMedianMaxprob',
-        'SemanticMedianMaxprobexp',
-        'SemanticAveMaxprobAveSimilarityexp',
-        'SemanticAveMaxprobAveSimilarity',
-        'SemanticEnrichedMaxprobAveDissimilarityexp',
         'SemanticEnrichedMaxprobAveDissimilarity',
-        'SemanticAvePPL',
-        'SemanticAvePPLexp',
-        'SemanticMedianPPL',
-        'SemanticMedianPPLexp',
-        'SemanticAvePPLAveSimilarityexp',
-        'SemanticAvePPLAveSimilarity',
-        'SemanticEnrichedPPLAveDissimilarityexp',
         'SemanticEnrichedPPLAveDissimilarity',
-        'SemanticAveMTE',
-        'SemanticMedianMTE',
-        'SemanticAveMTEAveSimilarity',
         'SemanticEnrichedMTEAveDissimilarity',
         'SumSemanticMaxprob',
         'SumSemanticPPL',
         'SumSemanticMTE',
+        'AdjustedSumSemanticMaxprob',
+        'AdjustedSumSemanticPPL',
+        'AdjustedSumSemanticMTE',
+        'ProbCocoaMaxprob',
+        'ProbCocoaPPL',
         'SupSumSemanticMaxprob_1',
         'SupSumSemanticMaxprob_0.1',
         'SupSumSemanticMaxprob_0.3',
@@ -111,6 +118,9 @@ def get_methods(args):
         'SupSumSemanticMTE_1.2',
         'SupSumSemanticMTE_1.5',
         'AveDissimilarity',
+        'SemanticEnrichedMaxprobTotalDissimilarity',
+        'SemanticEnrichedPPLTotalDissimilarity',
+        'SemanticEnrichedMTETotalDissimilarity',
     ]
     
     if args.ablation_type == 'all':
@@ -125,66 +135,14 @@ def get_methods(args):
             ],
             'msp': [
                 'MaximumSequenceProbability',
-                #'AveMaxprob',
-                #'SentenceSAR',
-                #'MaxprobGSU',
-                #'MaxprobGSUexp',
-                #'SemanticAveMaxprob',
-                #'SemanticAveMaxprobexp',
-                #'SemanticMedianMaxprob',
-                #'SemanticMedianMaxprobexp',
-                #'SemanticAveMaxprobAveSimilarityexp',
-                #'SemanticAveMaxprobAveSimilarity',
-                #'SemanticEnrichedMaxprobAveDissimilarityexp',
-                'SumSemanticMaxprob',
-                'SupSumSemanticMaxprob_0.1',
-                'SupSumSemanticMaxprob_0.3',
-                'SupSumSemanticMaxprob_0.5',
-                'SupSumSemanticMaxprob_0.7',
-                'SupSumSemanticMaxprob_1',
-                'SupSumSemanticMaxprob_1.2',
-                'SupSumSemanticMaxprob_1.5',
                 'SemanticEnrichedMaxprobAveDissimilarity',
             ],
             'ppl': [
                 'Perplexity',
-                #'AvePPL',
-                #'PPLSAR',
-                #'PPLGSU',
-                #'PPLGSUexp',
-                #'SemanticAvePPL',
-                #'SemanticAvePPLexp',
-                #'SemanticMedianPPL',
-                #'SemanticMedianPPLexp',
-                #'SemanticAvePPLAveSimilarityexp',
-                #'SemanticAvePPLAveSimilarity',
-                #'SemanticEnrichedPPLAveDissimilarityexp',
-                'SumSemanticPPL',
-                'SupSumSemanticPPL_0.1',
-                'SupSumSemanticPPL_0.3',
-                'SupSumSemanticPPL_0.5',
-                'SupSumSemanticPPL_0.7',
-                'SupSumSemanticPPL_1',
-                'SupSumSemanticPPL_1.2',
-                'SupSumSemanticPPL_1.5',
                 'SemanticEnrichedPPLAveDissimilarity',
             ],
             'mte': [
                 'MeanTokenEntropy',
-                #'AveMTE',
-                #'MTESAR',
-                #'MTEGSU',
-                #'SemanticAveMTE',
-                #'SemanticMedianMTE',
-                #'SemanticAveMTEAveSimilarity',
-                'SumSemanticMTE',
-                'SupSumSemanticMTE_0.1',
-                'SupSumSemanticMTE_0.3',
-                'SupSumSemanticMTE_0.5',
-                'SupSumSemanticMTE_0.7',
-                'SupSumSemanticMTE_1',
-                'SupSumSemanticMTE_1.2',
-                'SupSumSemanticMTE_1.5',
                 'SemanticEnrichedMTEAveDissimilarity',
             ]
         }
@@ -229,14 +187,19 @@ def get_methods(args):
             ],
             'msp': [
                 'SumSemanticMaxprob',
+                'SemanticEnrichedMaxprobTotalDissimilarity',
+                'ProbCocoaMaxprob',
                 'SemanticEnrichedMaxprobAveDissimilarity',
             ],
             'ppl': [
                 'SumSemanticPPL',
+                'SemanticEnrichedPPLTotalDissimilarity',
+                'ProbCocoaPPL',
                 'SemanticEnrichedPPLAveDissimilarity',
             ],
             'mte': [
                 'SumSemanticMTE',
+                'SemanticEnrichedMTETotalDissimilarity',
                 'SemanticEnrichedMTEAveDissimilarity',
             ]
         }
@@ -547,6 +510,8 @@ def main():
                             method_row.append(prr)
 
                         row_name = method_names[method] if method in method_names else method
+                        row_name = row_name.replace('Greedy', '')
+                        row_name = row_name.replace('Best', '')
                         group_rows[row_name] = method_row
 
                     df = pd.DataFrame.from_dict(group_rows, orient='index', columns=('XSum', 'WMT14FrEn', 'WMT19DeEn', 'CoQa', 'Trivia', 'MMLU', 'GSM8k',))
@@ -567,54 +532,6 @@ def main():
 
             with open(f'{out_dir}/{tex_prefix}_ablation.tex', 'w') as f:
                 f.write(table)
-
-                #all_rows = []
-                #for _, methods in methods_dict.items():
-                #    group_rows = {}
-                #    for method in methods:
-                #        method_row = []
-                #        for metric in ats_metrics:
-                #            prr = xsum_man.metrics[('sequence', method, metric, 'prr_0.5_normalized')]
-                #            method_row.append(prr)
-                #        group_rows[method] = method_row
-
-                #    df = pd.DataFrame.from_dict(group_rows, orient='index', columns=('XSum/RougeL',))
-                #    latex = df.style.format(precision=3).background_gradient(cmap=cm).set_caption(caption).to_latex()
-                #    latex = postprocess_latex(latex, metric_row)
-                #    header, latex_metric_row, latex_group_rows, footer = strip_latex(latex)
-                #    all_rows = all_rows + latex_group_rows
-
-                #table = '\n'.join(header + [latex_metric_row] + all_rows + footer)
-                #with open(f'{out_dir}/{tex_prefix}_{model}_sentsar_ats.tex', 'w') as f:
-                #    f.write(table)
-
-                #all_rows = []
-                #for _, methods in methods_dict.items():
-                #    group_rows = {}
-                #    for method in methods:
-                #        method_row = []
-                #        for metric in long_qa_metrics:
-                #            prr = coqa_man.metrics[('sequence', method, metric, 'prr_0.5_normalized')]
-                #            method_row.append(prr)
-                #            prr = trivia_man.metrics[('sequence', method, metric, 'prr_0.5_normalized')]
-                #            method_row.append(prr)
-                #        for metric in short_qa_metrics:
-                #            prr = mmlu_man.metrics[('sequence', method, metric, 'prr_0.5_normalized')]
-                #            method_row.append(prr)
-                #            prr = gsm8k_man.metrics[('sequence', method, metric, 'prr_0.5_normalized')]
-                #            method_row.append(prr)
-                #        group_rows[method] = method_row
-
-                #    df = pd.DataFrame.from_dict(group_rows, orient='index', columns=('CoQa/Al', 'Trivia/Al', 'MMLU/Acc', 'GSM8k/Acc',))
-                #    latex = df.style.format(precision=3).background_gradient(cmap=cm).set_caption(caption).to_latex()
-                #    latex = postprocess_latex(latex, metric_row)
-                #    header, latex_metric_row, latex_group_rows, footer = strip_latex(latex)
-                #    all_rows = all_rows + latex_group_rows
-
-                #table = '\n'.join(header + [latex_metric_row] + all_rows + footer)
-
-                #with open(f'{out_dir}/{tex_prefix}_{model}_sentsar_qa.tex', 'w') as f:
-                #    f.write(table)
 
 if __name__ == '__main__':
     main()
