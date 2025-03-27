@@ -7,7 +7,7 @@ from lm_polygraph.utils.manager import UEManager
 from lm_polygraph.estimators import *
 from lm_polygraph.ue_metrics import *
 from lm_polygraph.stat_calculators import *
-from lm_polygraph.gen_metrics import *
+from lm_polygraph.generation_metrics import *
 from lm_polygraph.utils.deberta import Deberta
 from lm_polygraph.generation_metrics.x_metric_utils import MT5ForRegression
 from transformers import AutoTokenizer, AutoModelForCausalLM
