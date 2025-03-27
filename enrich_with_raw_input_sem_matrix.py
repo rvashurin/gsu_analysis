@@ -7,7 +7,10 @@ from lm_polygraph.utils.manager import UEManager
 from lm_polygraph.estimators import *
 from lm_polygraph.ue_metrics import *
 from lm_polygraph.stat_calculators import *
+from lm_polygraph.gen_metrics import *
 from lm_polygraph.utils.deberta import Deberta
+from lm_polygraph.generation_metrics.x_metric_utils import MT5ForRegression
+from transformers import AutoTokenizer, AutoModelForCausalLM
 from tqdm import tqdm
 
 
@@ -51,6 +54,36 @@ def main():
         ConcatGreedySemanticMatrixCalculator(nli_model=nli_model),
     ]
 
+    model_name_or_path="google/metricx-24-hybrid-large-v2p6"
+    tokenizer_name="google/mt5-large"
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model_xmetric = MT5ForRegression.from_pretrained(model_name_or_path)
+    model_xmetric.to(device)
+    model_xmetric.eval()
+    tokenizer_xmetric = AutoTokenizer.from_pretrained(
+        tokenizer_name if tokenizer_name else model_name_or_path
+    )
+
+    gen_metrics = [
+        XMetric(model=model_xmetric,
+                tokenizer=tokenizer_xmetric,
+                source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n"),
+        XMetric(model=model_xmetric,
+                tokenizer=tokenizer_xmetric,
+                source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
+                sample=True),
+        XMetric(model=model_xmetric,
+                tokenizer=tokenizer_xmetric,
+                source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
+                sample=True,
+                sample_strategy='Best'),
+        XMetric(model=model_xmetric,
+                tokenizer=tokenizer_xmetric,
+                source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
+                sample=True,
+                sample_strategy='BestNormalized'),
+    ]
+
 
     # Loop through each model and dataset combination
     for model in tqdm(models):
@@ -75,6 +108,10 @@ def main():
                 stats.update(values)
 
             man.stats = stats
+
+            for gen_metric in gen_metrics:
+                values = gen_metric(stats=man.stats, target_texts=None)
+                man.gen_metrics[('sequence', str(gen_metric))] = values
 
             pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
             man.save_path = os.path.join(out_dir, f"{model}_{dataset}.man")
