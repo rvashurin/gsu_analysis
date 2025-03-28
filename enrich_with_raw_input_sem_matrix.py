@@ -49,8 +49,8 @@ def main(args):
     models = [args.model]
     datasets = args.datasets
 
-    script_dir = '/workspace/mans'
-    out_dir = '/workspace/mans_enriched'
+    script_dir = args.script_dir
+    out_dir = args.out_dir
 
     nli_model = Deberta(batch_size=5, device=args.deberta_device)
 
