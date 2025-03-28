@@ -107,9 +107,9 @@ def main(args):
 
             stats['no_fewshot_input_texts'] = extract_raw_inputs(dataset, stats['input_texts'])
 
-            for key, value in stats.items():
-                if isinstance(value, list) or isinstance(value, np.ndarray):
-                    stats[key] = value[:5]
+            #for key, value in stats.items():
+            #    if isinstance(value, list) or isinstance(value, np.ndarray):
+            #        stats[key] = value[:5]
 
             for calculator in stat_calculators:
                 texts = stats["greedy_texts"]
@@ -118,10 +118,10 @@ def main(args):
 
             man.stats = stats
             
-            if 'wmt' in dataset:
-                for gen_metric in gen_metrics:
-                    values = gen_metric(stats=man.stats, target_texts=None)
-                    man.gen_metrics[('sequence', str(gen_metric))] = values
+            #if 'wmt' in dataset:
+            #    for gen_metric in gen_metrics:
+            #        values = gen_metric(stats=man.stats, target_texts=None)
+            #        man.gen_metrics[('sequence', str(gen_metric))] = values
 
             pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
             man.save_path = os.path.join(out_dir, f"{model}_{dataset}.man")
