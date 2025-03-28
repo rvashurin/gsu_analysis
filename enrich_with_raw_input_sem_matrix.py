@@ -63,35 +63,35 @@ def main(args):
         ConcatGreedySemanticMatrixCalculator(nli_model=nli_model),
     ]
 
-    model_name_or_path="google/metricx-24-hybrid-large-v2p6"
-    tokenizer_name="google/mt5-large"
-    device = torch.device(args.mt5_device)
-    model_xmetric = MT5ForRegression.from_pretrained(model_name_or_path)
-    model_xmetric.to(device)
-    model_xmetric.eval()
-    tokenizer_xmetric = AutoTokenizer.from_pretrained(
-        tokenizer_name if tokenizer_name else model_name_or_path
-    )
+    #model_name_or_path="google/metricx-24-hybrid-large-v2p6"
+    #tokenizer_name="google/mt5-large"
+    #device = torch.device(args.mt5_device)
+    #model_xmetric = MT5ForRegression.from_pretrained(model_name_or_path)
+    #model_xmetric.to(device)
+    #model_xmetric.eval()
+    #tokenizer_xmetric = AutoTokenizer.from_pretrained(
+    #    tokenizer_name if tokenizer_name else model_name_or_path
+    #)
 
-    gen_metrics = [
-        XMetric(model=model_xmetric,
-                tokenizer=tokenizer_xmetric,
-                source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n"),
-        XMetric(model=model_xmetric,
-                tokenizer=tokenizer_xmetric,
-                source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
-                sample=True),
-        XMetric(model=model_xmetric,
-                tokenizer=tokenizer_xmetric,
-                source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
-                sample=True,
-                sample_strategy='Best'),
-        XMetric(model=model_xmetric,
-                tokenizer=tokenizer_xmetric,
-                source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
-                sample=True,
-                sample_strategy='BestNormalized'),
-    ]
+    #gen_metrics = [
+    #    XMetric(model=model_xmetric,
+    #            tokenizer=tokenizer_xmetric,
+    #            source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n"),
+    #    XMetric(model=model_xmetric,
+    #            tokenizer=tokenizer_xmetric,
+    #            source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
+    #            sample=True),
+    #    XMetric(model=model_xmetric,
+    #            tokenizer=tokenizer_xmetric,
+    #            source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
+    #            sample=True,
+    #            sample_strategy='Best'),
+    #    XMetric(model=model_xmetric,
+    #            tokenizer=tokenizer_xmetric,
+    #            source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
+    #            sample=True,
+    #            sample_strategy='BestNormalized'),
+    #]
 
 
     # Loop through each model and dataset combination
