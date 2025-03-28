@@ -117,10 +117,11 @@ def main(args):
                 stats.update(values)
 
             man.stats = stats
-
-            for gen_metric in gen_metrics:
-                values = gen_metric(stats=man.stats, target_texts=None)
-                man.gen_metrics[('sequence', str(gen_metric))] = values
+            
+            if 'wmt' in dataset:
+                for gen_metric in gen_metrics:
+                    values = gen_metric(stats=man.stats, target_texts=None)
+                    man.gen_metrics[('sequence', str(gen_metric))] = values
 
             pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
             man.save_path = os.path.join(out_dir, f"{model}_{dataset}.man")
