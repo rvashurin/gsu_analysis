@@ -20,6 +20,8 @@ def parse_args():
 
     parser.add_argument('--model', type=str, default='falcon7b')
     parser.add_argument('--datasets', nargs='+', default=['trivia', 'mmlu', 'coqa', 'gsm8k_cot', 'xsum', 'wmt14_fren', 'wmt19_deen'])
+    parser.add_argument('--deberta_device', type=str, default='cuda:0')
+    parser.add_argument('--mt5_device', type=str, default='cuda:1')
     parser.add_argument('--script_dir', type=str, default='/workspace/mans')
     parser.add_argument('--out_dir', type=str, default='/workspace/mans_enriched')
 
@@ -50,7 +52,7 @@ def main(args):
     script_dir = '/workspace/mans'
     out_dir = '/workspace/mans_enriched'
 
-    nli_model = Deberta(batch_size=5, device='cuda:0')
+    nli_model = Deberta(batch_size=5, device=args.deberta_device)
 
     stat_calculators = [
         FirstSampleCalculator(),
@@ -63,7 +65,7 @@ def main(args):
 
     model_name_or_path="google/metricx-24-hybrid-large-v2p6"
     tokenizer_name="google/mt5-large"
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(args.mt5_device)
     model_xmetric = MT5ForRegression.from_pretrained(model_name_or_path)
     model_xmetric.to(device)
     model_xmetric.eval()
