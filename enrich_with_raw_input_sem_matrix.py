@@ -3,6 +3,7 @@ import pathlib
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from lm_polygraph.utils.manager import UEManager
 from lm_polygraph.estimators import *
 from lm_polygraph.ue_metrics import *
@@ -12,6 +13,17 @@ from lm_polygraph.utils.deberta import Deberta
 from lm_polygraph.generation_metrics.x_metric_utils import MT5ForRegression
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from tqdm import tqdm
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--model', type=str, default='falcon7b')
+    parser.add_argument('--datasets', nargs='+', default=['trivia', 'mmlu', 'coqa', 'gsm8k_cot', 'xsum', 'wmt14_fren', 'wmt19_deen'])
+    parser.add_argument('--script_dir', type=str, default='/workspace/mans')
+    parser.add_argument('--out_dir', type=str, default='/workspace/mans_enriched')
+
+    return parser.parse_args()
 
 
 def extract_raw_inputs(dataset, input_texts):
@@ -31,14 +43,9 @@ def extract_raw_inputs(dataset, input_texts):
     return raw_inputs
 
 
-def main():
-    # Define models and datasets
-    models = ["falcon7b", "mistral7b", "llama8b"]
-    #models = ["falcon7b"]
-    datasets = [
-        "trivia", "mmlu", "coqa", "gsm8k_cot", 
-        "xsum", "wmt14_fren", "wmt19_deen", 
-    ]
+def main(args):
+    models = [args.model]
+    datasets = args.datasets
 
     script_dir = '/workspace/mans'
     out_dir = '/workspace/mans_enriched'
@@ -118,4 +125,5 @@ def main():
             man.save()
 
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+    main(args)
