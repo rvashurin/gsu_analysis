@@ -22,6 +22,7 @@ def parse_args():
     parser.add_argument('--datasets', nargs='+', default=['trivia', 'mmlu', 'coqa', 'gsm8k_cot', 'xsum', 'wmt14_fren', 'wmt19_deen'])
     parser.add_argument('--deberta_device', type=str, default='cuda:0')
     parser.add_argument('--mt5_device', type=str, default='cuda:1')
+    parser.add_argument('--api_key', type=str, default='')
     parser.add_argument('--script_dir', type=str, default='/workspace/mans')
     parser.add_argument('--out_dir', type=str, default='/workspace/mans_enriched')
 
@@ -52,15 +53,15 @@ def main(args):
     script_dir = args.script_dir
     out_dir = args.out_dir
 
-    nli_model = Deberta(batch_size=5, device=args.deberta_device)
+    #nli_model = Deberta(batch_size=1, device=args.deberta_device)
 
     stat_calculators = [
         FirstSampleCalculator(),
         BestSampleCalculator(),
-        SemanticMatrixCalculator(nli_model=nli_model),
-        GreedySemanticMatrixCalculator(nli_model=nli_model),
-        ConcatSemanticMatrixCalculator(nli_model=nli_model),
-        ConcatGreedySemanticMatrixCalculator(nli_model=nli_model),
+        #SemanticMatrixCalculator(nli_model=nli_model),
+        #GreedySemanticMatrixCalculator(nli_model=nli_model),
+        #ConcatSemanticMatrixCalculator(nli_model=nli_model),
+        #ConcatGreedySemanticMatrixCalculator(nli_model=nli_model),
     ]
 
     #model_name_or_path="google/metricx-24-hybrid-large-v2p6"
@@ -73,7 +74,7 @@ def main(args):
     #    tokenizer_name if tokenizer_name else model_name_or_path
     #)
 
-    #gen_metrics = [
+    gen_metrics_wmt = [
     #    XMetric(model=model_xmetric,
     #            tokenizer=tokenizer_xmetric,
     #            source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n"),
@@ -91,7 +92,14 @@ def main(args):
     #            source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
     #            sample=True,
     #            sample_strategy='BestNormalized'),
-    #]
+    ]
+
+    gen_metrics_qa = [
+        GptAccuracyMetric(api_key=args.api_key),
+        GptAccuracyMetric(api_key=args.api_key, sample=True),
+        GptAccuracyMetric(api_key=args.api_key, sample=True, sample_strategy='Best'),
+        GptAccuracyMetric(api_key=args.api_key, sample=True, sample_strategy='BestNormalized'),
+    ]
 
 
     # Loop through each model and dataset combination
@@ -107,9 +115,9 @@ def main(args):
 
             stats['no_fewshot_input_texts'] = extract_raw_inputs(dataset, stats['input_texts'])
 
-            #for key, value in stats.items():
-            #    if isinstance(value, list) or isinstance(value, np.ndarray):
-            #        stats[key] = value[:5]
+            for key, value in stats.items():
+                if isinstance(value, list) or isinstance(value, np.ndarray):
+                    stats[key] = value[:5]
 
             for calculator in stat_calculators:
                 texts = stats["greedy_texts"]
@@ -117,11 +125,15 @@ def main(args):
                 stats.update(values)
 
             man.stats = stats
-            
-            #if 'wmt' in dataset:
-            #    for gen_metric in gen_metrics:
-            #        values = gen_metric(stats=man.stats, target_texts=None)
-            #        man.gen_metrics[('sequence', str(gen_metric))] = values
+
+            if 'wmt' in dataset:
+                for gen_metric in gen_metrics_wmt:
+                    values = gen_metric(stats=man.stats, target_texts=stats['target_texts'])
+                    man.gen_metrics[('sequence', str(gen_metric))] = values
+            elif dataset in ['coqa', 'gsm8k_cot', 'trivia', 'mmlu']:
+                for gen_metric in gen_metrics_qa:
+                    values = gen_metric(stats=man.stats, target_texts=stats['target_texts'])
+                    man.gen_metrics[('sequence', str(gen_metric))] = values
 
             pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
             man.save_path = os.path.join(out_dir, f"{model}_{dataset}.man")
