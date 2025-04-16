@@ -30,7 +30,7 @@ def parse_args():
 def extract_raw_inputs(dataset, input_texts):
     raw_inputs = []
 
-    if dataset == 'trivia':
+    if dataset in ['trivia', 'coqa_no_context']:
         raw_inputs = ['\n'.join(text.split('\n')[-2:]) for text in input_texts]
     elif dataset == 'mmlu':
         raw_inputs = ['\n'.join(text.split('\n')[-6:]) for text in input_texts]

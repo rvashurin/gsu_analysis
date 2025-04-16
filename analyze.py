@@ -17,14 +17,14 @@ from itertools import combinations
 # set seeds
 np.random.seed(1)
 
-models = ['mistral7b', 'llama8b']
+models = ['mistral7b', 'llama8b', 'falcon7b']
 
 datasets = [
-    "trivia", "mmlu", "coqa", "gsm8k_cot", 
-    "xsum", "wmt14_fren", "wmt19_deen", 
+    "trivia", "mmlu", "coqa_no_context", "gsm8k_cot", 
+    #"xsum", "wmt14_fren", "wmt19_deen", 
 ]
 
-script_dir = 'sample_metric_mans/best_sample_with_greedy_enriched'
+script_dir = 'sample_metric_mans/with_concat_similarity_enriched'
 
 heatmap_methods = [
     #'CEDegMat',
@@ -52,15 +52,19 @@ heatmap_methods = [
     #'MTEGSU',
     #'MaxprobGSUexp',
     #'PPLGSUexp',
-    'GreedySemanticEnrichedPPLAveDissimilarityexp',
+    #'GreedySemanticEnrichedPPLAveDissimilarityexp',
+    'GreedySemanticEnrichedMaxprobAveDissimilarity',
     'GreedySemanticEnrichedPPLAveDissimilarity',
+    'SemanticEntropy',
+    'SemanticDensity',
 ]
 
 metrics = {
-    'trivia': ['AlignScoreOutputTarget', 'SampleAlignScoreOutputTarget'],
-    'coqa': ['AlignScoreOutputTarget', 'SampleAlignScoreOutputTarget'],
-    'mmlu': ['Accuracy', 'SampleAccuracy'],
-    'gsm8k_cot': ['Accuracy', 'SampleAccuracy'],
+    'trivia': ['GptAccuracy_gpt-4o-mini'],
+    'coqa': ['GptAccuracy_gpt-4o-mini'],
+    'coqa_no_context': ['GptAccuracy_gpt-4o-mini'],
+    'mmlu': ['GptAccuracy_gpt-4o-mini'],
+    'gsm8k_cot': ['GptAccuracy_gpt-4o-mini'],
     'xsum': ['Rouge_rougeL', 'SampleRouge_rougeL'],
     'wmt14_fren': ['Comet', 'SampleComet'],
     'wmt19_deen': ['Comet', 'SampleComet'],
@@ -168,7 +172,9 @@ for model in tqdm(models):
 
         fig_path = out_dir / f"method_corr_heatmap.png"
         data_dict = {k: man.estimations[('sequence', k)] for k in heatmap_methods}
-        plot_spearman_heatmap(data_dict, fig_path, title=f"{model}_{dataset} Pairwise Spearman Rank Correlation Heatmap")
+        #plot_spearman_heatmap(data_dict, fig_path, title=f"{model}_{dataset} Pairwise Spearman Rank Correlation Heatmap")
+
+        ppl_cocoa_values = man.estimations[('sequence', 'GreedySemanticEnrichedPPLAveDissimilarity')]
 
         data_size = len(man.stats['greedy_texts'])
 
@@ -181,7 +187,7 @@ for model in tqdm(models):
             # take 5 random examples that fall into lower 0.2 quantile according to one method and higher 0.8 quantile according to another method
             method_values = man.estimations[('sequence', method)]
             method2_values = man.estimations[('sequence', method2)]
-
+            
             method_low_quantile = np.quantile(method_values, 0.3)
             method_high_quantile = np.quantile(method_values, 0.7)
 
@@ -204,6 +210,7 @@ for model in tqdm(models):
                 pair_out_dir.mkdir(parents=True, exist_ok=True)
                 method_value_quantile = percentileofscore(method_values, method_values[random_i])
                 method2_value_quantile = percentileofscore(method2_values, method2_values[random_i])
+                ppl_value_quantile = percentileofscore(ppl_cocoa_values, ppl_cocoa_values[random_i])
 
                 #matrix = np.array(man.stats['sample_sentence_similarity'][random_i])
                 #samples = man.stats['sample_texts'][random_i]
@@ -216,6 +223,9 @@ for model in tqdm(models):
                     text += f"Sample {random_i}\n\n"
 
                     text += f"=" * 100 + "\n\n"
+
+                    text += 'GreedySemanticEnrichedPPLAveDissimilarity value: {:.3f}\n'.format(ppl_cocoa_values[random_i])
+                    text += f"GreedySemanticEnrichedPPLAveDissimilarity value quantile: {ppl_value_quantile:.3f}\n\n"
 
                     text += f"{method} value: {method_values[random_i]:.3f}\n"
                     text += f"{method} value quantile: {method_value_quantile:.3f}\n\n"

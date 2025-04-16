@@ -11,15 +11,18 @@ from tqdm import tqdm
 
 def main():
     # Define models and datasets
-    models = ["falcon7b", "mistral7b", "llama8b"]
     #models = ["falcon7b"]
-    datasets = [
-        "trivia", "mmlu", "coqa", "gsm8k_cot", 
-        "xsum", "wmt14_fren", "wmt19_deen", 
-    ]
+    #datasets = [
+    #    "trivia", "mmlu", "coqa", "gsm8k_cot", 
+    #    "xsum", "wmt14_fren", "wmt19_deen", 
+    #]
 
-    script_dir = 'sample_metric_mans/with_extra_sim_matrices'
-    out_dir = 'sample_metric_mans/with_extra_sim_matrices_enriched'
+    models = ["falcon7b", "mistral7b", "llama8b"]
+    datasets = ["trivia", "mmlu", "coqa_no_context", "gsm8k_cot", "wmt14_fren", "wmt19_deen"]
+
+    script_dir = 'sample_metric_mans/with_concat_similarity'
+    gen_metrics_dir = 'sample_metric_mans/with_gpt_judge_metricx'
+    out_dir = 'sample_metric_mans/with_concat_similarity_enriched'
 
     estimators = [
         #SampledMaximumSequenceProbability(),
@@ -195,15 +198,32 @@ def main():
         #SumSemanticPPL(sample_strategy="best_normalized"),
         #SumSemanticMTE(sample_strategy="best_normalized"),
 #
+        GreedySemanticDensity(),
+        SemanticDensity(),
+        SemanticDensity(sample_strategy="best"),
+        SemanticDensity(sample_strategy="best_normalized"),
+
         GreedyAveDissimilarity(),
         #AveDissimilarity(),
         AveDissimilarity(sample_strategy="best"),
         #AveDissimilarity(sample_strategy="best_normalized"),
     ]
 
+    gen_metrics = {
+        'GptAccuracy_gpt-4o-mini': 'GptAccuracy_gpt-4o-mini',
+        'GptAccuracy_gpt-4o-mini_First': 'SampleGptAccuracy_gpt-4o-mini',
+        'GptAccuracy_gpt-4o-mini_Best': 'BestSampleGptAccuracy_gpt-4o-mini',
+        'GptAccuracy_gpt-4o-mini_BestNormalized': 'BestNormalizedSampleGptAccuracy_gpt-4o-mini',
+        'xmetric': 'xmetric',
+        'Samplexmetric': 'Samplexmetric',
+        'BestSamplexmetric': 'BestSamplexmetric',
+        'BestNormalizedSamplexmetric': 'BestNormalizedSamplexmetric',
+    }
+
     ue_metrics = [
         #PredictionRejectionArea(),
         PredictionRejectionArea(max_rejection=0.5),
+        AUROC(),
     ]
 
     stat_calculators = [
@@ -236,6 +256,12 @@ def main():
             man.stats = stats
 
             man.ue_metrics = ue_metrics
+
+            gen_metric_manager_path = os.path.join(gen_metrics_dir, manager_filename)
+            gen_metric_man = UEManager.load(gen_metric_manager_path)
+            for original_name, name in gen_metrics.items():
+                if ('sequence', original_name) in gen_metric_man.gen_metrics:
+                    man.gen_metrics[('sequence', name)] = gen_metric_man.gen_metrics[('sequence', original_name)]
 
             man.eval_ue()
             pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
