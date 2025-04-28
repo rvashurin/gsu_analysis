@@ -78,7 +78,7 @@ def main(args):
         evaluation_mode="nli_sp",
     )
 
-    ignore_regex = "(?s).*Original:\n(.*?)\nTranslation:\n")
+    ignore_regex = "(?s).*Original:\n(.*?)\nTranslation:\n"
     gen_metrics_wmt = [
         XMetric(model=model_xmetric,
                 tokenizer=tokenizer_xmetric,
