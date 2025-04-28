@@ -57,6 +57,7 @@ def main(args):
     stat_calculators = [
         FirstSampleCalculator(),
         BestSampleCalculator(),
+        MbrSampleCalculator(),
     ]
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -241,7 +242,7 @@ def main(args):
             elif dataset == 'xsum':
                 metrics = xsum_metrics
 
-            for gen_metric in metrics:
+            for gen_metric in tqdm(metrics):
                 values = gen_metric(stats=man.stats, target_texts=stats['target_texts'])
                 man.gen_metrics[('sequence', str(gen_metric))] = values
 
