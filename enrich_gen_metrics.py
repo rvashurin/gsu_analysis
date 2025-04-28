@@ -14,6 +14,7 @@ from lm_polygraph.generation_metrics.x_metric_utils import MT5ForRegression
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from tqdm import tqdm
 from evaluate import load
+from lm_polygraph.generation_metrics.alignscore_utils import AlignScorer
 
 
 def parse_args():
