@@ -19,7 +19,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--model', type=str, default='falcon7b')
-    parser.add_argument('--datasets', nargs='+', default=['trivia', 'mmlu', 'coqa', 'gsm8k_cot', 'xsum', 'wmt14_fren', 'wmt19_deen'])
+    parser.add_argument('--datasets', nargs='+', default=['trivia', 'mmlu', 'coqa_no_context', 'gsm8k_cot', 'xsum', 'wmt14_fren', 'wmt19_deen'])
     parser.add_argument('--mt5_device', type=str, default='cuda:0')
     parser.add_argument('--api_key', type=str, default='')
     parser.add_argument('--script_dir', type=str, default='/workspace/mans')
@@ -35,7 +35,7 @@ def extract_raw_inputs(dataset, input_texts):
         raw_inputs = ['\n'.join(text.split('\n')[-2:]) for text in input_texts]
     elif dataset == 'mmlu':
         raw_inputs = ['\n'.join(text.split('\n')[-6:]) for text in input_texts]
-    elif dataset == 'coqa':
+    elif dataset == 'coqa_no_context':
         raw_inputs = ['\n'.join([input_text.split('Question')[0]] + input_text.split('\n')[-2:]) for input_text in input_texts]
     elif dataset == 'gsm8k_cot':
         raw_inputs = ['\n'.join(text.split('\n')[-2:]) for text in input_texts]
@@ -231,7 +231,7 @@ def main(args):
 
             if 'wmt' in dataset:
                 metrics = gen_metrics_wmt
-            elif dataset in ['coqa', 'gsm8k_cot', 'trivia', 'mmlu']:
+            elif dataset in ['coqa_no_context', 'gsm8k_cot', 'trivia', 'mmlu']:
                 metrics = qa_metrics.get(dataset, [])
                 if dataset == 'trivia':
                     metrics = [AggregatedMetric(base_metric=metric) for metric in metrics]
