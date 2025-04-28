@@ -120,33 +120,33 @@ def main(args):
     qa_metrics = {
         'gsm8k': [
             AccuracyMetric(
-                target_ignore_regex = "(?s).*#### "
-                output_ignore_regex = "(?s).*The answer is "
+                target_ignore_regex = "(?s).*#### ",
+                output_ignore_regex = "(?s).*The answer is ",
                 normalize = True,
             ),
             AccuracyMetric(
-                target_ignore_regex = "(?s).*#### "
-                output_ignore_regex = "(?s).*The answer is "
+                target_ignore_regex = "(?s).*#### ",
+                output_ignore_regex = "(?s).*The answer is ",
                 normalize = True,
                 sample=True,
             ),
             AccuracyMetric(
-                target_ignore_regex = "(?s).*#### "
-                output_ignore_regex = "(?s).*The answer is "
+                target_ignore_regex = "(?s).*#### ",
+                output_ignore_regex = "(?s).*The answer is ",
                 normalize = True,
                 sample=True,
                 sample_strategy='Best',
             ),
             AccuracyMetric(
-                target_ignore_regex = "(?s).*#### "
-                output_ignore_regex = "(?s).*The answer is "
+                target_ignore_regex = "(?s).*#### ",
+                output_ignore_regex = "(?s).*The answer is ",
                 normalize = True,
                 sample=True,
                 sample_strategy='BestNormalized',
             ),
             AccuracyMetric(
-                target_ignore_regex = "(?s).*#### "
-                output_ignore_regex = "(?s).*The answer is "
+                target_ignore_regex = "(?s).*#### ",
+                output_ignore_regex = "(?s).*The answer is ",
                 normalize = True,
                 sample=True,
                 sample_strategy='Mbr',
