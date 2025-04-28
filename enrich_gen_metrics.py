@@ -82,7 +82,7 @@ def main(args):
     gen_metrics_wmt = [
         XMetric(model=model_xmetric,
                 tokenizer=tokenizer_xmetric,
-                source_ignore_regex=ignore_regex,
+                source_ignore_regex=ignore_regex),
         XMetric(model=model_xmetric,
                 tokenizer=tokenizer_xmetric,
                 source_ignore_regex=ignore_regex,
