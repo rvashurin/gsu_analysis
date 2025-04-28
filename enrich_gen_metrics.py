@@ -13,6 +13,7 @@ from lm_polygraph.utils.deberta import Deberta
 from lm_polygraph.generation_metrics.x_metric_utils import MT5ForRegression
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from tqdm import tqdm
+from evaluate import load
 
 
 def parse_args():
