@@ -57,9 +57,9 @@ def main(args):
         BestSampleCalculator(),
     ]
 
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model_name_or_path="google/metricx-24-hybrid-large-v2p6"
     tokenizer_name="google/mt5-large"
-    device = torch.device(args.mt5_device)
     model_xmetric = MT5ForRegression.from_pretrained(model_name_or_path)
     model_xmetric.to(device)
     model_xmetric.eval()
@@ -67,33 +67,143 @@ def main(args):
         tokenizer_name if tokenizer_name else model_name_or_path
     )
 
+    comet_scorer = load("comet")
+
+    ckpt_path="https://huggingface.co/yzha/AlignScore/resolve/main/AlignScore-large.ckpt"
+    align_scorer = AlignScorer(
+        model="roberta-large",
+        batch_size=1,
+        device="cuda:0",
+        ckpt_path=ckpt_path,
+        evaluation_mode="nli_sp",
+    )
+
+    ignore_regex = "(?s).*Original:\n(.*?)\nTranslation:\n")
     gen_metrics_wmt = [
         XMetric(model=model_xmetric,
                 tokenizer=tokenizer_xmetric,
-                source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n"),
+                source_ignore_regex=ignore_regex,
         XMetric(model=model_xmetric,
                 tokenizer=tokenizer_xmetric,
-                source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
+                source_ignore_regex=ignore_regex,
                 sample=True),
         XMetric(model=model_xmetric,
                 tokenizer=tokenizer_xmetric,
-                source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
+                source_ignore_regex=ignore_regex,
                 sample=True,
                 sample_strategy='Best'),
         XMetric(model=model_xmetric,
                 tokenizer=tokenizer_xmetric,
-                source_ignore_regex="(?s).*Original:\n(.*?)\nTranslation:\n",
+                source_ignore_regex=ignore_regex,
                 sample=True,
                 sample_strategy='BestNormalized'),
+        XMetric(model=model_xmetric,
+                tokenizer=tokenizer_xmetric,
+                source_ignore_regex=ignore_regex,
+                sample=True,
+                sample_strategy='Mbr'),
+        Comet(comet_scorer, source_ignore_regex=ignore_regex),
+        Comet(comet_scorer, source_ignore_regex=ignore_regex, sample=True),
+        Comet(comet_scorer, source_ignore_regex=ignore_regex, sample=True, sample_strategy="Best"),
+        Comet(comet_scorer, source_ignore_regex=ignore_regex, sample=True, sample_strategy="BestNormalized"),
+        Comet(comet_scorer, source_ignore_regex=ignore_regex, sample=True, sample_strategy="Mbr"),
     ]
 
-    gen_metrics_qa = [
+    gpt_metrics = [
         GptAccuracyMetric(api_key=args.api_key),
         GptAccuracyMetric(api_key=args.api_key, sample=True),
         GptAccuracyMetric(api_key=args.api_key, sample=True, sample_strategy='Best'),
         GptAccuracyMetric(api_key=args.api_key, sample=True, sample_strategy='BestNormalized'),
+        GptAccuracyMetric(api_key=args.api_key, sample=True, sample_strategy='Mbr'),
     ]
+    
+    qa_metrics = {
+        'gsm8k': [
+            AccuracyMetric(
+                target_ignore_regex = "(?s).*#### "
+                output_ignore_regex = "(?s).*The answer is "
+                normalize = True,
+            ),
+            AccuracyMetric(
+                target_ignore_regex = "(?s).*#### "
+                output_ignore_regex = "(?s).*The answer is "
+                normalize = True,
+                sample=True,
+            ),
+            AccuracyMetric(
+                target_ignore_regex = "(?s).*#### "
+                output_ignore_regex = "(?s).*The answer is "
+                normalize = True,
+                sample=True,
+                sample_strategy='Best',
+            ),
+            AccuracyMetric(
+                target_ignore_regex = "(?s).*#### "
+                output_ignore_regex = "(?s).*The answer is "
+                normalize = True,
+                sample=True,
+                sample_strategy='BestNormalized',
+            ),
+            AccuracyMetric(
+                target_ignore_regex = "(?s).*#### "
+                output_ignore_regex = "(?s).*The answer is "
+                normalize = True,
+                sample=True,
+                sample_strategy='Mbr',
+            )
+        ],
+        'mmlu': [
+            AccuracyMetric(
+                normalize = True,
+            ),
+            AccuracyMetric(
+                normalize = True,
+                sample=True,
+            ),
+            AccuracyMetric(
+                normalize = True,
+                sample=True,
+                sample_strategy='Best',
+            ),
+            AccuracyMetric(
+                normalize = True,
+                sample=True,
+                sample_strategy='BestNormalized',
+            ),
+            AccuracyMetric(
+                normalize = True,
+                sample=True,
+                sample_strategy='Mbr',
+            )
+        ],
+        'trivia': [
+            AlignScore(align_scorer),
+            AlignScore(align_scorer, sample=True),
+            AlignScore(align_scorer, sample=True, sample_strategy='Best'),
+            AlignScore(align_scorer, sample=True, sample_strategy='BestNormalized'),
+            AlignScore(align_scorer, sample=True, sample_strategy='Mbr'),
+        ],
+        'coqa': [
+            AlignScore(align_scorer),
+            AlignScore(align_scorer, sample=True),
+            AlignScore(align_scorer, sample=True, sample_strategy='Best'),
+            AlignScore(align_scorer, sample=True, sample_strategy='BestNormalized'),
+            AlignScore(align_scorer, sample=True, sample_strategy='Mbr'),
+        ]
+    }
 
+    xsum_metrics = [
+        AlignScore(align_scorer, ignore_target=True),
+        AlignScore(align_scorer, ignore_target=True, sample=True),
+        AlignScore(align_scorer, ignore_target=True, sample=True, sample_strategy='Best'),
+        AlignScore(align_scorer, ignore_target=True, sample=True, sample_strategy='BestNormalized'),
+        AlignScore(align_scorer, ignore_target=True, sample=True, sample_strategy='Mbr'),
+        RougeMetric("rougeL"),
+        RougeMetric("rougeL", sample=True),
+        RougeMetric("rougeL", sample=True, sample_strategy='Best'),
+        RougeMetric("rougeL", sample=True, sample_strategy="BestNormalized"),
+        RougeMetric("rougeL", sample=True, sample_strategy='Mbr'),
+    ]
 
     # Loop through each model and dataset combination
     for model in tqdm(models):
@@ -120,13 +230,18 @@ def main(args):
             man.stats = stats
 
             if 'wmt' in dataset:
-                for gen_metric in gen_metrics_wmt:
-                    values = gen_metric(stats=man.stats, target_texts=stats['target_texts'])
-                    man.gen_metrics[('sequence', str(gen_metric))] = values
+                metrics = gen_metrics_wmt
             elif dataset in ['coqa', 'gsm8k_cot', 'trivia', 'mmlu']:
-                for gen_metric in gen_metrics_qa:
-                    values = gen_metric(stats=man.stats, target_texts=stats['target_texts'])
-                    man.gen_metrics[('sequence', str(gen_metric))] = values
+                metrics = qa_metrics.get(dataset, [])
+                if dataset == 'trivia':
+                    metrics = [AggregatedMetric(base_metric=metric) for metric in metrics]
+                metrics = metrics + gpt_metrics
+            elif dataset == 'xsum':
+                metrics = xsum_metrics
+
+            for gen_metric in metrics:
+                values = gen_metric(stats=man.stats, target_texts=stats['target_texts'])
+                man.gen_metrics[('sequence', str(gen_metric))] = values
 
             pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
             man.save_path = os.path.join(out_dir, f"{model}_{dataset}.man")

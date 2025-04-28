@@ -229,6 +229,7 @@ def main():
     stat_calculators = [
         FirstSampleCalculator(),
         BestSampleCalculator(),
+        MbrSampleCalculator(),
     ]
 
 
