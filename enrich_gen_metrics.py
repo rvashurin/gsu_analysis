@@ -75,10 +75,11 @@ def main(args):
     ckpt_path="https://huggingface.co/yzha/AlignScore/resolve/main/AlignScore-large.ckpt"
     align_scorer = AlignScorer(
         model="roberta-large",
-        batch_size=1,
+        batch_size=5,
         device="cuda:0",
         ckpt_path=ckpt_path,
         evaluation_mode="nli_sp",
+        verbose=False
     )
 
     ignore_regex = "(?s).*Original:\n(.*?)\nTranslation:\n"
@@ -113,15 +114,15 @@ def main(args):
     ]
 
     gpt_metrics = [
-        GptAccuracyMetric(api_key=args.api_key),
-        GptAccuracyMetric(api_key=args.api_key, sample=True),
-        GptAccuracyMetric(api_key=args.api_key, sample=True, sample_strategy='Best'),
-        GptAccuracyMetric(api_key=args.api_key, sample=True, sample_strategy='BestNormalized'),
-        GptAccuracyMetric(api_key=args.api_key, sample=True, sample_strategy='Mbr'),
+        GptAccuracyMetric(model='gpt-4.1-mini', api_key=args.api_key),
+        GptAccuracyMetric(model='gpt-4.1-mini', api_key=args.api_key, sample=True),
+        GptAccuracyMetric(model='gpt-4.1-mini', api_key=args.api_key, sample=True, sample_strategy='Best'),
+        GptAccuracyMetric(model='gpt-4.1-mini', api_key=args.api_key, sample=True, sample_strategy='BestNormalized'),
+        GptAccuracyMetric(model='gpt-4.1-mini', api_key=args.api_key, sample=True, sample_strategy='Mbr'),
     ]
     
     qa_metrics = {
-        'gsm8k': [
+        'gsm8k_cot': [
             AccuracyMetric(
                 target_ignore_regex = "(?s).*#### ",
                 output_ignore_regex = "(?s).*The answer is ",
@@ -186,7 +187,7 @@ def main(args):
             AlignScore(align_scorer, sample=True, sample_strategy='BestNormalized'),
             AlignScore(align_scorer, sample=True, sample_strategy='Mbr'),
         ],
-        'coqa': [
+        'coqa_no_context': [
             AlignScore(align_scorer),
             AlignScore(align_scorer, sample=True),
             AlignScore(align_scorer, sample=True, sample_strategy='Best'),
@@ -221,10 +222,6 @@ def main(args):
 
             stats['no_fewshot_input_texts'] = extract_raw_inputs(dataset, stats['input_texts'])
 
-            for key, value in stats.items():
-                if isinstance(value, list) or isinstance(value, np.ndarray):
-                    stats[key] = value[:5]
-
             for calculator in stat_calculators:
                 texts = stats["greedy_texts"]
                 values = calculator(dependencies=stats, texts=texts, model=None)
@@ -238,7 +235,7 @@ def main(args):
                 metrics = qa_metrics.get(dataset, [])
                 if dataset == 'trivia':
                     metrics = [AggregatedMetric(base_metric=metric) for metric in metrics]
-                metrics = metrics + gpt_metrics
+                metrics = gpt_metrics + metrics
             elif dataset == 'xsum':
                 metrics = xsum_metrics
 
